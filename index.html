@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PixPen AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Lora:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAF8;
+  --surface:#FFFFFF;
+  --ink:#0C0C0B;
+  --ink80:#2A2A28;
+  --muted:#7A7A75;
+  --faint:#C4C4BC;
+  --rule:rgba(12,12,11,.07);
+  --rule2:rgba(12,12,11,.13);
+  --accent:#D4500A;
+  --accent-lt:rgba(212,80,10,.09);
+  --r:16px;
+  --rsm:9px;
+  --sans:'Bricolage Grotesque',system-ui,sans-serif;
+  --serif:'Lora',Georgia,serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;overflow-x:hidden;cursor:none;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{display:block}
+button{font-family:var(--sans)}
+
+/* cursor */
+#c1{position:fixed;width:8px;height:8px;background:var(--ink);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .2s,background .2s}
+#c2{position:fixed;width:26px;height:26px;border:1.5px solid rgba(12,12,11,.2);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left .1s,top .1s,opacity .2s}
+body:has(button:hover,a:hover) #c1{transform:translate(-50%,-50%) scale(2.5);background:var(--accent)}
+body:has(button:hover,a:hover) #c2{opacity:0}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:60px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,250,248,.88);backdrop-filter:blur(22px);border-bottom:1px solid var(--rule)}
+.nlogo{display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:700;letter-spacing:-.025em}
+.nlogo-mark{width:30px;height:30px;background:var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;color:white;flex-shrink:0}
+.nlinks{display:flex;gap:2px}
+.nlinks a{font-size:.82rem;font-weight:500;color:var(--muted);padding:7px 14px;border-radius:7px;transition:all .15s;cursor:none}
+.nlinks a:hover{color:var(--ink);background:rgba(12,12,11,.05)}
+.nright{display:flex;gap:10px;align-items:center}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--sans);font-size:.84rem;font-weight:600;border:none;cursor:none;transition:all .2s;padding:11px 22px;border-radius:var(--rsm);letter-spacing:-.01em;white-space:nowrap}
+.btn-dark{background:var(--ink);color:#fff;box-shadow:0 2px 10px rgba(12,12,11,.2)}
+.btn-dark:hover{background:var(--ink80);transform:translateY(-1px);box-shadow:0 5px 18px rgba(12,12,11,.25)}
+.btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--rule2)}
+.btn-ghost:hover{background:var(--surface);border-color:rgba(12,12,11,.22)}
+.btn-accent{background:var(--accent);color:#fff;box-shadow:0 3px 14px rgba(212,80,10,.32)}
+.btn-accent:hover{background:#bf4208;transform:translateY(-1px);box-shadow:0 7px 22px rgba(212,80,10,.38)}
+.btn-lg{padding:14px 30px;font-size:.9rem}
+.btn-xl{padding:16px 38px;font-size:.94rem}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1140px;margin:0 auto;padding:0 40px}
+.section{padding:104px 40px}
+.section-center{text-align:center}
+.section-inner{max-width:1140px;margin:0 auto}
+
+/* eyebrow */
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.7rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.eyebrow::before{content:'';width:16px;height:1.5px;background:var(--accent)}
+.eyebrow-center{justify-content:center}
+.eyebrow-center::before,.eyebrow-center::after{content:'';flex:1;height:1px;background:var(--faint);max-width:40px}
+
+/* headings */
+h2.d{font-family:var(--serif);font-size:clamp(2.4rem,4.5vw,3.8rem);font-weight:500;line-height:1.07;letter-spacing:-.025em;margin-bottom:18px}
+h2.d em{font-style:italic;color:var(--accent)}
+.lead{font-size:1.02rem;color:var(--muted);line-height:1.75;font-weight:400}
+
+/* ── HERO ── */
+#hero{min-height:100vh;display:grid;grid-template-columns:55% 45%;align-items:center;padding:calc(60px + 72px) 40px 80px;max-width:1140px;margin:0 auto;gap:24px}
+.h-eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--rule2);border-radius:30px;padding:5px 14px 5px 8px;font-size:.76rem;font-weight:600;color:var(--muted);margin-bottom:28px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.h-badge-pill{background:#22C55E;border-radius:30px;color:#fff;font-size:.66rem;font-weight:700;padding:2px 9px;text-transform:uppercase;letter-spacing:.04em}
+h1.hero-h{font-family:var(--serif);font-size:clamp(3rem,5.2vw,5rem);font-weight:500;line-height:.97;letter-spacing:-.03em;margin-bottom:24px}
+h1.hero-h em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:1.06rem;color:var(--muted);line-height:1.75;max-width:450px;font-weight:400;margin-bottom:36px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hero-note{font-size:.74rem;color:var(--faint);margin-top:14px}
+.hero-stats{display:flex;gap:36px;padding-top:36px;margin-top:36px;border-top:1px solid var(--rule)}
+.hs-n{font-family:var(--serif);font-size:2.2rem;font-weight:500;line-height:1;color:var(--ink);letter-spacing:-.02em}
+.hs-l{font-size:.76rem;color:var(--muted);margin-top:3px}
+
+/* pen */
+.hero-right{position:relative;display:flex;justify-content:center;align-items:center}
+.pen-stage{position:relative;height:500px;width:100%;display:flex;justify-content:center;align-items:center}
+.pen-halo{position:absolute;width:280px;height:280px;border-radius:50%;border:1px solid rgba(212,80,10,.12);top:50%;left:50%;transform:translate(-50%,-50%)}
+.pen-halo2{position:absolute;width:380px;height:380px;border-radius:50%;border:1px dashed rgba(12,12,11,.05);top:50%;left:50%;transform:translate(-50%,-50%)}
+.pen-shadow2{position:absolute;bottom:44px;left:50%;transform:translateX(-50%);width:50px;height:12px;background:radial-gradient(ellipse,rgba(12,12,11,.18),transparent 70%);animation:pshadow 5s ease-in-out infinite}
+@keyframes pshadow{0%,100%{transform:translateX(-50%) scaleX(1);opacity:.5}50%{transform:translateX(-50%) scaleX(.6);opacity:.22}}
+.pen{width:52px;animation:pfloat 5s ease-in-out infinite;filter:drop-shadow(0 16px 32px rgba(12,12,11,.14))}
+@keyframes pfloat{0%,100%{transform:rotate(-7deg) translateY(0)}50%{transform:rotate(-7deg) translateY(-18px)}}
+.pen-eraser{width:52px;height:18px;background:linear-gradient(135deg,#FFA8C0,#E07090);border-radius:5px 5px 0 0}
+.pen-collar{width:52px;height:6px;background:linear-gradient(135deg,#D8D8D4,#ABABAB)}
+.pen-body{width:52px;height:280px;background:linear-gradient(160deg,#FFD84A 0%,#F5C030 28%,#D4A014 58%,#ECC530 78%,#FFD84A 100%);position:relative;box-shadow:inset -8px 0 18px rgba(0,0,0,.2),inset 4px 0 10px rgba(255,255,255,.14)}
+.pen-led{position:absolute;left:50%;transform:translateX(-50%);top:18px;width:2.5px;height:200px;border-radius:2px;background:linear-gradient(180deg,transparent,rgba(212,80,10,.85) 18%,rgba(212,80,10,.3) 82%,transparent);animation:pled 3s ease-in-out infinite}
+@keyframes pled{0%,100%{opacity:.4}50%{opacity:1}}
+.pen-label{position:absolute;bottom:52px;left:50%;transform:translateX(-50%);font-family:var(--serif);font-style:italic;font-size:9px;color:rgba(12,12,11,.3);white-space:nowrap;letter-spacing:.04em}
+.pen-tip-w{width:52px;height:44px;position:relative;overflow:hidden}
+.pen-tip{position:absolute;bottom:0;left:0;width:0;height:0;border-left:26px solid transparent;border-right:26px solid transparent;border-top:44px solid #BF9010}
+.pen-graphite{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:16px solid #1A1A1A}
+.pen-glow{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:110px;height:20px;background:radial-gradient(ellipse,rgba(255,208,40,.22),transparent 70%);animation:pfloat 5s ease-in-out infinite}
+
+/* float tags */
+.ftag{position:absolute;background:var(--surface);border:1.5px solid var(--rule2);border-radius:12px;padding:9px 14px;box-shadow:0 8px 28px rgba(12,12,11,.08);font-size:.76rem;font-weight:500;white-space:nowrap;animation:ftfloat 5s ease-in-out infinite}
+@keyframes ftfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.ftag.t1{top:72px;left:8%;animation-delay:0s}
+.ftag.t2{top:185px;right:4%;animation-delay:1.6s}
+.ftag.t3{bottom:155px;left:5%;animation-delay:3.2s}
+.ftag-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:7px;flex-shrink:0}
+.ftag-g{background:#22C55E}
+.ftag-a{background:var(--accent)}
+.ftag-b{background:var(--ink)}
+
+/* ── PRESS ── */
+.press{background:var(--surface);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:20px 0;overflow:hidden}
+.press-inner{display:flex;align-items:center;gap:10px;padding:0 40px}
+.press-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);flex-shrink:0;margin-right:20px}
+.press-track{display:flex;gap:48px;animation:pscroll 28s linear infinite;width:max-content;align-items:center}
+.press:hover .press-track{animation-play-state:paused}
+@keyframes pscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.press-item{font-family:var(--serif);font-style:italic;font-size:.94rem;color:var(--faint);white-space:nowrap}
+
+/* ── FEATURES ── */
+#features{background:var(--surface);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.feat-bento{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-top:52px}
+.fc{background:var(--surface);padding:34px 30px;transition:background .2s;cursor:default;position:relative}
+.fc:hover{background:var(--bg)}
+.fc.s2{grid-column:span 2}
+.fc-n{font-family:var(--serif);font-style:italic;font-size:2.2rem;color:var(--rule2);line-height:1;margin-bottom:18px}
+.fc-icon{font-size:1.5rem;margin-bottom:16px}
+.fc-title{font-size:.96rem;font-weight:700;margin-bottom:9px;letter-spacing:-.02em}
+.fc-desc{font-size:.83rem;color:var(--muted);line-height:1.72;font-weight:400}
+.fc-chip{display:inline-block;margin-top:14px;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:5px;background:var(--accent-lt);color:var(--accent)}
+
+/* ── APP SECTION ── */
+#app{background:var(--bg)}
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start;margin-top:60px}
+.app-feats{display:flex;flex-direction:column;gap:0}
+.af{display:flex;gap:16px;padding:20px 0;border-bottom:1px solid var(--rule);align-items:flex-start}
+.af:last-child{border:none}
+.af-ico{width:36px;height:36px;background:var(--surface);border:1.5px solid var(--rule2);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.92rem;flex-shrink:0}
+.af-title{font-size:.88rem;font-weight:700;margin-bottom:3px;letter-spacing:-.01em}
+.af-desc{font-size:.8rem;color:var(--muted);line-height:1.62;font-weight:400}
+
+/* mockup */
+.mshell{background:var(--surface);border:1.5px solid var(--rule2);border-radius:var(--r);overflow:hidden;box-shadow:0 28px 70px rgba(12,12,11,.1),0 2px 0 rgba(255,255,255,.9) inset}
+.mtbar{background:var(--bg);border-bottom:1px solid var(--rule);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.mtbar-dots{display:flex;gap:5px}
+.mtd{width:11px;height:11px;border-radius:50%}
+.mtd.r{background:#FF5F57}.mtd.y{background:#FEBC2E}.mtd.g{background:#28C840}
+.mtbar-title{font-size:.72rem;font-weight:600;color:var(--muted)}
+.mtbar-status{font-size:.65rem;color:#22C55E;font-weight:600;display:flex;align-items:center;gap:4px}
+.msd{width:5px;height:5px;background:#22C55E;border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.mtabs{display:flex;border-bottom:1px solid var(--rule);background:var(--surface)}
+.mt{flex:1;padding:9px 4px;font-size:.69rem;font-weight:600;color:var(--muted);text-align:center;border-bottom:2px solid transparent;cursor:none;transition:all .16s}
+.mt.on{color:var(--ink);border-bottom-color:var(--ink)}
+.mt:hover:not(.on){color:var(--ink)}
+.mpane{display:none}
+.mpane.on{display:block;animation:pan-in .22s ease}
+@keyframes pan-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* docs pane */
+.docs-scroll{padding:8px;max-height:310px;overflow-y:auto}
+.docs-scroll::-webkit-scrollbar{width:3px}
+.docs-scroll::-webkit-scrollbar-thumb{background:var(--rule2);border-radius:2px}
+.drow{display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:8px;cursor:none;transition:background .14s;border:1px solid transparent;margin-bottom:1px}
+.drow:hover,.drow.sel{background:var(--bg);border-color:var(--rule)}
+.drow.sel .dname{color:var(--accent);font-weight:700}
+.dico{width:28px;height:28px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.dname{font-size:.74rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.dmeta{font-size:.61rem;color:var(--faint)}
+.dbadge{font-size:.57rem;font-weight:700;padding:2px 7px;border-radius:3px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+.bv{background:rgba(99,102,241,.1);color:#5856D6}.bt{background:rgba(12,12,11,.05);color:var(--muted)}.ba{background:var(--accent-lt);color:var(--accent)}
+.dbtns{display:flex;gap:4px;padding:6px 8px;border-top:1px solid var(--rule)}
+.dbtn{flex:1;padding:6px 4px;background:var(--bg);border:1.5px solid var(--rule);border-radius:6px;font-size:.62rem;font-weight:600;color:var(--muted);cursor:none;font-family:var(--sans);transition:all .15s}
+.dbtn:hover{background:var(--surface);color:var(--ink);border-color:var(--rule2)}
+
+/* editor */
+.ed-wrap{display:flex;flex-direction:column}
+.ed-tb{display:flex;gap:2px;padding:6px 8px;border-bottom:1px solid var(--rule);background:var(--bg);flex-wrap:wrap;align-items:center}
+.etb{padding:4px 8px;border-radius:4px;background:transparent;border:none;font-size:.71rem;font-weight:600;color:var(--muted);cursor:none;font-family:var(--sans);transition:all .14s}
+.etb:hover{background:var(--surface);color:var(--ink)}
+.esep{width:1px;height:13px;background:var(--rule2);margin:0 2px}
+.ed-area{padding:14px;min-height:190px;max-height:230px;overflow-y:auto;font-size:.79rem;line-height:1.82;color:#2E2E2C;outline:none}
+.ed-area h3{font-family:var(--serif);font-size:.96rem;font-weight:500;margin-bottom:7px;color:var(--ink)}
+.ed-area p{margin-bottom:6px;font-weight:400}
+.ehl{background:rgba(212,80,10,.1);color:#B03008;padding:1px 4px;border-radius:3px}
+.ed-foot{padding:6px 10px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;font-size:.61rem;color:var(--faint);background:var(--bg)}
+.ed-live{color:#22C55E;display:flex;align-items:center;gap:4px}
+.eld{width:5px;height:5px;background:#22C55E;border-radius:50%;animation:blink 2s infinite}
+
+/* voice */
+.vpane{padding:13px}
+.wfbox{height:68px;background:var(--bg);border:1.5px solid var(--rule);border-radius:8px;display:flex;align-items:center;justify-content:center;gap:2px;padding:9px;position:relative;margin-bottom:9px}
+.wr-ind{position:absolute;top:7px;right:9px;font-size:.6rem;font-weight:700;color:#EF4444;display:flex;align-items:center;gap:3px}
+.wr-dot{width:5px;height:5px;background:#EF4444;border-radius:50%;animation:blink 1s infinite}
+.wbar{width:2.5px;background:var(--accent);border-radius:2px;height:4px;transition:height .08s}
+.tbox{background:var(--bg);border:1.5px solid var(--rule);border-radius:8px;padding:9px;min-height:60px;max-height:88px;overflow-y:auto;font-size:.74rem;line-height:1.65;color:var(--ink);margin-bottom:9px;font-weight:400}
+.tbox .caret::after{content:'|';animation:blink .65s infinite;color:var(--accent)}
+.vbtns{display:flex;gap:6px}
+.vbtn{flex:1;padding:7px;border-radius:6px;font-size:.67rem;font-weight:600;cursor:none;font-family:var(--sans);transition:all .16s;border:1.5px solid}
+.vbr{border-color:rgba(239,68,68,.3);color:#EF4444;background:rgba(239,68,68,.04)}.vbr:hover,.vbr.on{background:rgba(239,68,68,.1)}
+.vsv{border-color:var(--rule2);color:var(--muted);background:var(--bg)}.vsv:hover{background:var(--surface);color:var(--ink)}
+
+/* AI chat */
+.aipane{display:flex;flex-direction:column;height:290px}
+.aimsgs{flex:1;padding:9px;overflow-y:auto;display:flex;flex-direction:column;gap:7px}
+.aimsgs::-webkit-scrollbar{width:3px}
+.aimsgs::-webkit-scrollbar-thumb{background:var(--rule2)}
+.aimsg{padding:8px 11px;border-radius:10px;font-size:.74rem;line-height:1.6;max-width:88%;font-weight:400}
+.aimsg.bot{background:var(--bg);border:1.5px solid var(--rule);color:var(--ink);border-radius:3px 10px 10px 10px}
+.aimsg.bot .ml{font-size:.56rem;font-weight:700;color:var(--accent);margin-bottom:3px;letter-spacing:.07em;text-transform:uppercase}
+.aimsg.user{background:var(--ink);color:white;align-self:flex-end;border-radius:10px 3px 10px 10px}
+.typing{display:flex;align-items:center;gap:3px;padding:8px 11px;background:var(--bg);border:1.5px solid var(--rule);border-radius:3px 10px 10px 10px;width:fit-content}
+.typing span{width:4px;height:4px;background:var(--faint);border-radius:50%;animation:ty 1s infinite}
+.typing span:nth-child(2){animation-delay:.16s}.typing span:nth-child(3){animation-delay:.32s}
+@keyframes ty{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.airow{padding:8px;border-top:1px solid var(--rule);display:flex;gap:5px;background:var(--bg)}
+.aiinp{flex:1;background:var(--surface);border:1.5px solid var(--rule2);border-radius:6px;padding:7px 10px;font-size:.75rem;color:var(--ink);font-family:var(--sans);outline:none;transition:border-color .2s;font-weight:400}
+.aiinp:focus{border-color:rgba(212,80,10,.4)}
+.aisend{width:30px;height:30px;background:var(--ink);border:none;border-radius:50%;cursor:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .16s;font-size:.82rem;color:white}
+.aisend:hover{background:var(--ink80)}
+
+/* settings */
+.settw{padding:3px;max-height:290px;overflow-y:auto}
+.sr{display:flex;align-items:center;justify-content:space-between;padding:11px 10px;border-bottom:1px solid var(--rule)}
+.sr:last-child{border:none}
+.sname{font-size:.76rem;font-weight:600;margin-bottom:2px}
+.sdesc{font-size:.62rem;color:var(--faint)}
+.tog{position:relative;width:36px;height:19px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tsl{position:absolute;inset:0;background:#E5E7EB;border-radius:10px;cursor:none;transition:all .25s}
+.tsl::before{content:'';position:absolute;width:13px;height:13px;left:3px;top:3px;background:white;border-radius:50%;transition:all .25s;box-shadow:0 1px 3px rgba(0,0,0,.16)}
+.tog input:checked+.tsl{background:var(--ink)}
+.tog input:checked+.tsl::before{transform:translateX(17px)}
+.ssel{background:var(--bg);border:1.5px solid var(--rule2);border-radius:6px;padding:5px 8px;font-size:.67rem;font-family:var(--sans);color:var(--ink);outline:none;cursor:none}
+
+/* ── PRICING ── */
+#pricing{background:var(--surface);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:52px}
+.pc{background:var(--bg);border:1.5px solid var(--rule);border-radius:var(--r);padding:34px 28px;position:relative;transition:all .25s;cursor:default}
+.pc:hover{background:var(--surface);border-color:var(--rule2);box-shadow:0 14px 44px rgba(12,12,11,.07);transform:translateY(-3px)}
+.pc.hot{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pc.hot:hover{transform:translateY(-3px);box-shadow:0 14px 44px rgba(12,12,11,.25)}
+.pc-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--accent);color:white;font-size:.62rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 14px;border-radius:20px;white-space:nowrap}
+.pc-plan{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
+.pc.hot .pc-plan{color:rgba(255,255,255,.45)}
+.pc-price{font-family:var(--serif);font-size:3.4rem;font-weight:500;line-height:1;letter-spacing:-.03em;margin-bottom:4px}
+.pc-price sup{font-size:1.3rem;vertical-align:top;margin-top:9px;display:inline-block;color:var(--muted)}
+.pc.hot .pc-price sup{color:rgba(255,255,255,.45)}
+.pc-per{font-size:.78rem;color:var(--muted);margin-bottom:26px}
+.pc.hot .pc-per{color:rgba(255,255,255,.45)}
+.pc-list{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
+.pc-list li{font-size:.83rem;display:flex;align-items:center;gap:8px;color:rgba(122,122,117,1)}
+.pc.hot .pc-list li{color:rgba(255,255,255,.72)}
+.pc-list li::before{content:'✓';font-size:.72rem;color:var(--accent);font-weight:700;flex-shrink:0}
+.pc.hot .pc-list li::before{color:rgba(255,255,255,.55)}
+.pc-btn{width:100%;padding:12px;border-radius:var(--rsm);font-size:.83rem;font-weight:600;cursor:none;font-family:var(--sans);transition:all .2s}
+.pcbg{background:var(--surface);border:1.5px solid var(--rule2);color:var(--ink)}.pcbg:hover{background:var(--bg)}
+.pcbw{background:white;border:none;color:var(--ink)}.pcbw:hover{background:rgba(255,255,255,.88)}
+
+/* ── USE CASES ── */
+#use-cases{background:var(--bg)}
+.cgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:52px}
+.cc{background:var(--surface);border:1.5px solid var(--rule);border-radius:var(--r);padding:36px 32px;transition:all .25s;cursor:default;position:relative;overflow:hidden}
+.cc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.cc:hover::after{transform:scaleX(1)}
+.cc:hover{box-shadow:0 14px 44px rgba(12,12,11,.07);transform:translateY(-2px)}
+.cc-em{font-size:2rem;margin-bottom:16px;display:block}
+.cc-t{font-family:var(--serif);font-size:1.35rem;font-style:italic;margin-bottom:9px}
+.cc-d{font-size:.84rem;color:var(--muted);line-height:1.7;margin-bottom:16px;font-weight:400}
+.cc-tags{display:flex;gap:6px;flex-wrap:wrap}
+.ctag{font-size:.66rem;font-weight:700;padding:3px 10px;border-radius:5px;background:var(--accent-lt);color:var(--accent)}
+
+/* ── SPECS ── */
+#specs{background:var(--surface);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.specgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:52px}
+.spec-card{background:var(--bg);border:1.5px solid var(--rule);border-radius:var(--r);overflow:hidden}
+.spec-row{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-bottom:1px solid var(--rule);transition:background .14s}
+.spec-row:last-child{border:none}
+.spec-row:hover{background:var(--surface)}
+.sk{font-size:.79rem;color:var(--muted)}
+.sv{font-size:.79rem;font-weight:600;text-align:right;max-width:55%}
+.sv.hi{color:var(--accent)}
+.charge-card{background:var(--bg);border:1.5px solid var(--rule);border-radius:var(--r);padding:28px;text-align:center}
+.charge-ey{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:18px}
+.charge-ring-w{width:96px;height:96px;margin:0 auto 14px;position:relative;display:flex;align-items:center;justify-content:center}
+.charge-ring-w svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.cpct{font-family:var(--serif);font-size:1.7rem;font-style:italic;position:relative;z-index:1;color:var(--ink)}
+.cbarbg{height:5px;background:rgba(12,12,11,.06);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.cbarfill{height:100%;background:var(--accent);border-radius:3px;width:0;transition:width 1.8s ease}
+.cstat{font-size:.73rem;color:var(--muted);margin-bottom:20px;font-weight:400}
+.ibox{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:8px}
+.irow{display:flex;align-items:center;gap:9px;font-size:.79rem;color:var(--muted)}
+
+/* ── FEEDBACK ── */
+#feedback{background:var(--bg)}
+.qrcard{max-width:520px;margin:52px auto 0;background:var(--surface);border:1.5px solid var(--rule2);border-radius:var(--r);padding:42px;text-align:center}
+.qrgrid{width:136px;height:136px;background:var(--ink);border-radius:10px;padding:11px;margin:0 auto 18px;display:grid;grid-template-columns:repeat(9,1fr);gap:2px;position:relative;overflow:hidden}
+.qrgrid span{border-radius:1px}
+.qrscan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(212,80,10,.92),transparent);animation:qscan 2.6s ease-in-out infinite}
+@keyframes qscan{0%{top:11px}100%{top:123px}}
+.qrid{font-size:.63rem;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+.qrdesc{font-size:.87rem;color:var(--muted);margin-bottom:22px;line-height:1.65;font-weight:400}
+.stars{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+.star{font-size:26px;color:#E5E7EB;cursor:none;transition:all .16s;line-height:1}
+.star.on,.star.hv{color:#F59E0B;transform:scale(1.12)}
+.qrform{display:flex;flex-direction:column;gap:9px;text-align:left}
+.finput{width:100%;background:var(--bg);border:1.5px solid var(--rule2);border-radius:var(--rsm);padding:11px 14px;font-size:.86rem;font-family:var(--sans);color:var(--ink);outline:none;transition:border-color .2s;font-weight:400}
+.finput:focus{border-color:rgba(212,80,10,.42);background:var(--surface)}
+textarea.finput{resize:none}
+.qrok{display:none;margin-top:10px;padding:12px;background:rgba(34,197,94,.07);border:1.5px solid rgba(34,197,94,.2);border-radius:var(--rsm);color:#15803D;font-size:.82rem;font-weight:600}
+
+/* ── TESTIMONIALS ── */
+#testimonials{background:var(--surface);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.touter{overflow:hidden;margin-top:50px}
+.ttrack{display:flex;gap:16px;animation:tscroll 38s linear infinite;width:max-content}
+#testimonials:hover .ttrack{animation-play-state:paused}
+@keyframes tscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tcard{width:284px;flex-shrink:0;background:var(--bg);border:1.5px solid var(--rule);border-radius:var(--r);padding:24px;transition:all .2s;cursor:default}
+.tcard:hover{background:var(--surface);border-color:var(--rule2);box-shadow:0 8px 28px rgba(12,12,11,.06)}
+.tstars{color:#F59E0B;font-size:.82rem;letter-spacing:2px;margin-bottom:11px}
+.tquote{font-family:var(--serif);font-size:.98rem;font-style:italic;color:var(--ink);line-height:1.65;margin-bottom:16px}
+.tauthor{display:flex;align-items:center;gap:9px}
+.tav{width:30px;height:30px;border-radius:50%;background:var(--ink);color:white;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:700;flex-shrink:0}
+.tname{font-size:.78rem;font-weight:700}
+.trole{font-size:.71rem;color:var(--muted)}
+
+/* ── CTA ── */
+#cta{padding:108px 40px;text-align:center;position:relative;overflow:hidden;background:var(--ink)}
+#cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 65% 55% at 50% 50%,rgba(212,80,10,.18),transparent 70%)}
+.cta-inner{position:relative;z-index:1;max-width:600px;margin:0 auto}
+#cta h2{font-family:var(--serif);font-size:clamp(2.6rem,5vw,4.2rem);font-weight:500;letter-spacing:-.025em;line-height:1.02;margin-bottom:18px;color:white}
+#cta h2 em{font-style:italic;color:#FFA07A}
+#cta p{font-size:.98rem;color:rgba(255,255,255,.52);max-width:420px;margin:0 auto 36px;line-height:1.75;font-weight:400}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* ── FOOTER ── */
+footer{background:#0E0E0C;border-top:1px solid rgba(255,255,255,.06);padding:56px 40px 38px;color:rgba(255,255,255,.5)}
+.ftgrid{display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr;gap:44px;max-width:1140px;margin:0 auto 44px}
+.ftlogo{font-family:var(--serif);font-style:italic;font-size:1.15rem;color:white;display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.ftlm{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-style:normal;flex-shrink:0}
+.fttag{font-size:.81rem;line-height:1.65;max-width:230px;margin-bottom:20px;font-weight:400}
+.ftsoc{display:flex;gap:7px}
+.soc{width:30px;height:30px;border:1px solid rgba(255,255,255,.1);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.78rem;cursor:none;transition:all .2s;color:rgba(255,255,255,.4)}
+.soc:hover{border-color:rgba(255,255,255,.25);color:white}
+.ftcol h5{font-size:.63rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:14px}
+.ftcol ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.ftcol a{font-size:.81rem;color:rgba(255,255,255,.48);transition:color .14s;cursor:none}
+.ftcol a:hover{color:white}
+.ftbot{max-width:1140px;margin:0 auto;border-top:1px solid rgba(255,255,255,.05);padding-top:22px;display:flex;justify-content:space-between;font-size:.74rem}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(12,12,11,.5);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--r);max-width:420px;width:100%;padding:34px;position:relative;animation:modal-in .28s cubic-bezier(.16,1,.3,1);box-shadow:0 40px 90px rgba(12,12,11,.22)}
+@keyframes modal-in{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.mx{position:absolute;top:13px;right:14px;background:none;border:none;font-size:1.1rem;color:var(--faint);cursor:none;transition:color .14s;line-height:1}
+.mx:hover{color:var(--ink)}
+.mo-badge{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-lt);padding:3px 10px;border-radius:5px;margin-bottom:13px}
+.modal h3{font-family:var(--serif);font-size:1.65rem;font-style:italic;margin-bottom:6px;line-height:1.1}
+.modal-sub{font-size:.83rem;color:var(--muted);margin-bottom:22px;line-height:1.6;font-weight:400}
+.modal-form{display:flex;flex-direction:column;gap:9px}
+.modal-ok{display:none;text-align:center;padding:18px 0}
+.ok-ico{font-size:2.6rem;margin-bottom:12px}
+.modal-ok h4{font-family:var(--serif);font-size:1.45rem;font-style:italic;margin-bottom:5px}
+.modal-ok p{font-size:.83rem;color:var(--muted);font-weight:400}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;z-index:9000;background:var(--ink);color:white;padding:11px 17px;border-radius:var(--rsm);font-size:.81rem;font-weight:500;transform:translateY(60px);opacity:0;transition:all .26s;max-width:280px;box-shadow:0 8px 28px rgba(12,12,11,.24)}
+.toast.on{transform:translateY(0);opacity:1}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1)}
+.rv.on{opacity:1;transform:none}
+
+/* responsive */
+@media(max-width:900px){
+  nav{padding:0 20px}
+  .nlinks{display:none}
+  #hero{grid-template-columns:1fr;padding:calc(60px + 52px) 20px 52px}
+  .hero-right{display:none}
+  .section{padding:68px 20px}
+  .feat-bento{grid-template-columns:1fr}.fc.s2{grid-column:span 1}
+  .app-grid,.specgrid{grid-template-columns:1fr}
+  .pgrid{grid-template-columns:1fr}
+  .cgrid{grid-template-columns:1fr}
+  .ftgrid{grid-template-columns:1fr 1fr;gap:28px}
+  #hero,.press{padding-left:20px;padding-right:20px}
+}
+</style>
+</head>
+<body>
+
+<div id="c1"></div>
+<div id="c2"></div>
+
+<!-- MODAL -->
+<div class="overlay" id="ov">
+  <div class="modal">
+    <button class="mx" onclick="cM()">✕</button>
+    <div id="mf">
+      <div class="mo-badge">Pre-order open</div>
+      <h3>Reserve your PixPen AI.</h3>
+      <p class="modal-sub">Ships Q2 2026. Every order includes 3 months of Student Pro, free. No charge today.</p>
+      <div class="modal-form">
+        <input class="finput" type="text" id="mn" placeholder="Full name">
+        <input class="finput" type="email" id="me" placeholder="Email address">
+        <select class="finput" id="mc" style="cursor:none;background:var(--bg)">
+          <option value="">Select color variant</option>
+          <option>Graphite Black</option><option>Ivory White</option>
+          <option>Midnight Blue</option><option>Warm Gold</option>
+        </select>
+        <select class="finput" id="mp" style="cursor:none;background:var(--bg)">
+          <option value="">Select subscription plan</option>
+          <option>Starter — Free</option>
+          <option>Student Pro — $9/mo</option>
+          <option>Professional — $24/mo</option>
+        </select>
+        <button class="btn btn-accent btn-lg" style="width:100%;justify-content:center;margin-top:4px" onclick="doOrder()">Confirm Pre-Order — $199</button>
+        <p style="font-size:.71rem;color:var(--faint);text-align:center">No charge today · Free shipping · Ships Q2 2026</p>
+      </div>
+    </div>
+    <div class="modal-ok" id="mok">
+      <div class="ok-ico">🎉</div>
+      <h4>You're on the list.</h4>
+      <p>We'll reach out before your PixPen AI ships. Expect something special.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<!-- NAV -->
+<nav>
+  <a class="nlogo" href="#">
+    <div class="nlogo-mark">✏</div>PixPen AI
+  </a>
+  <div class="nlinks">
+    <a href="#features">Features</a>
+    <a href="#app">App</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#use-cases">Who It's For</a>
+    <a href="#specs">Specs</a>
+    <a href="#feedback">Feedback</a>
+  </div>
+  <div class="nright">
+    <button class="btn btn-ghost" onclick="document.querySelector('#pricing').scrollIntoView({behavior:'smooth'})">View plans</button>
+    <button class="btn btn-dark" onclick="oM()">Pre-Order — $199</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div style="max-width:1140px;margin:0 auto">
+  <section id="hero">
+    <div>
+      <div class="h-eyebrow">
+        <span class="h-badge-pill">New</span>
+        Now taking pre-orders — ships Q2 2026
+      </div>
+      <h1 class="hero-h">Write it.<br>Speak it.<br><em>Own it.</em></h1>
+      <p class="hero-sub">PixPen AI is the world's first AI-powered writing pen. Voice transcription, onboard AI, document sync, and a patent-pending paper writer — all in a device smaller than your hand.</p>
+      <div class="hero-btns">
+        <button class="btn btn-accent btn-xl" onclick="oM()">Pre-Order — $199</button>
+        <button class="btn btn-ghost btn-xl" onclick="toast('Demo video coming soon — join the waitlist to get notified.')">▶ Watch the demo</button>
+      </div>
+      <p class="hero-note">Free shipping · 3 months Pro included · No charge today</p>
+      <div class="hero-stats">
+        <div><div class="hs-n" data-count="98">0</div><div class="hs-l">% transcription accuracy</div></div>
+        <div><div class="hs-n" data-count="12">0</div><div class="hs-l">hours of battery</div></div>
+        <div><div class="hs-n" data-count="40">0</div><div class="hs-l">languages supported</div></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="pen-stage">
+        <div class="pen-halo2"></div>
+        <div class="pen-halo"></div>
+        <div class="ftag t1"><span class="ftag-dot ftag-g"></span>Transcribing now…</div>
+        <div class="ftag t2"><span class="ftag-dot ftag-a"></span>AI connected</div>
+        <div class="ftag t3"><span class="ftag-dot ftag-b"></span>32 GB · 73% charged</div>
+        <div class="pen">
+          <div class="pen-eraser"></div>
+          <div class="pen-collar"></div>
+          <div class="pen-body">
+            <div class="pen-led"></div>
+            <div class="pen-label">PixPen AI</div>
+          </div>
+          <div class="pen-tip-w">
+            <div class="pen-tip"></div>
+            <div class="pen-graphite"></div>
+          </div>
+          <div class="pen-glow"></div>
+        </div>
+        <div class="pen-shadow2"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- PRESS STRIP -->
+<div class="press">
+  <div class="press-inner">
+    <span class="press-label">As seen in</span>
+    <div class="press-track">
+      <span class="press-item">TechCrunch</span><span class="press-item">The Verge</span>
+      <span class="press-item">Wired</span><span class="press-item">Forbes</span>
+      <span class="press-item">Fast Company</span><span class="press-item">Product Hunt</span>
+      <span class="press-item">EdTech Review</span><span class="press-item">Accessibility Digest</span>
+      <span class="press-item">TechCrunch</span><span class="press-item">The Verge</span>
+      <span class="press-item">Wired</span><span class="press-item">Forbes</span>
+      <span class="press-item">Fast Company</span><span class="press-item">Product Hunt</span>
+      <span class="press-item">EdTech Review</span><span class="press-item">Accessibility Digest</span>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features" class="section">
+  <div class="section-inner">
+    <div class="rv">
+      <div class="eyebrow">Features</div>
+      <h2 class="d">Everything you need.<br><em>Nothing you don't.</em></h2>
+      <p class="lead" style="max-width:480px">Every component engineered to work together — seamlessly, reliably, beautifully.</p>
+    </div>
+    <div class="feat-bento">
+      <div class="fc s2 rv">
+        <div class="fc-n">01</div>
+        <div class="fc-title">Voice Command & Real-Time Transcription</div>
+        <div class="fc-desc">A 4-mic array with 360° noise cancellation captures every word — even in a crowded lecture hall. Say "record" and PixPen formats your speech into clean, structured notes automatically. 98.3% accuracy across 40+ languages. Zero effort on your end.</div>
+        <span class="fc-chip">Real-time · 40+ languages</span>
+      </div>
+      <div class="fc rv">
+        <div class="fc-n">02</div>
+        <div class="fc-icon">🤖</div>
+        <div class="fc-title">Onboard AI Engine</div>
+        <div class="fc-desc">Ask anything from the pen itself — summarize, generate, search, translate. Works entirely offline via the neural chip.</div>
+        <span class="fc-chip">GPT-class · Offline</span>
+      </div>
+      <div class="fc rv">
+        <div class="fc-n">03</div>
+        <div class="fc-icon">✍️</div>
+        <div class="fc-title">White-Out Writer</div>
+        <div class="fc-desc">A patent-pending stamp mechanism physically writes AI-generated text directly onto paper. Say it — it appears on the page.</div>
+        <span class="fc-chip">Physical + Digital</span>
+      </div>
+      <div class="fc rv">
+        <div class="fc-n">04</div>
+        <div class="fc-icon">📲</div>
+        <div class="fc-title">Instant App Sync</div>
+        <div class="fc-desc">Documents appear in your iOS or Android app in under a second via Bluetooth 5.3 or WiFi 6.</div>
+        <span class="fc-chip">iOS · Android · Web</span>
+      </div>
+      <div class="fc rv">
+        <div class="fc-n">05</div>
+        <div class="fc-icon">🔊</div>
+        <div class="fc-title">Accessibility First</div>
+        <div class="fc-desc">Built for deaf users, dyslexia, and writing difficulties. Audio playback, haptic feedback, real-time visual captions. ADA compliant.</div>
+        <span class="fc-chip">Universal design</span>
+      </div>
+      <div class="fc rv">
+        <div class="fc-n">06</div>
+        <div class="fc-icon">🧲</div>
+        <div class="fc-title">Magnetic Charging Case</div>
+        <div class="fc-desc">Snaps on magnetically, no cables. Full charge in 45 minutes. The case holds 3 full cycles — 36+ hours of total power.</div>
+        <span class="fc-chip">36+ hr total power</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APP -->
+<section id="app" class="section">
+  <div class="section-inner">
+    <div class="app-grid">
+      <div>
+        <div class="rv">
+          <div class="eyebrow">The App</div>
+          <h2 class="d">Your documents,<br><em>beautifully organized.</em></h2>
+          <p class="lead" style="max-width:420px">Every note your pen captures syncs instantly — ready to view, edit, search, and share.</p>
+        </div>
+        <div class="app-feats">
+          <div class="af rv"><div class="af-ico">📂</div><div><div class="af-title">Smart Document Manager</div><div class="af-desc">All docs organized by date, type, and subject. Full-text search across everything, instantly.</div></div></div>
+          <div class="af rv"><div class="af-ico">✏️</div><div><div class="af-title">Rich Text Editor</div><div class="af-desc">Full formatting, highlights, lists. Export to PDF, Word, or Google Docs in one tap.</div></div></div>
+          <div class="af rv"><div class="af-ico">🤖</div><div><div class="af-title">AI Assistant</div><div class="af-desc">Summarize, rewrite, translate, or quiz yourself on any document — instantly.</div></div></div>
+          <div class="af rv"><div class="af-ico">⚙️</div><div><div class="af-title">Full Device Control</div><div class="af-desc">Configure noise cancellation, language, sync, and accessibility all from the app.</div></div></div>
+        </div>
+      </div>
+      <div class="mshell rv" style="transition-delay:.1s">
+        <div class="mtbar">
+          <div class="mtbar-dots"><div class="mtd r"></div><div class="mtd y"></div><div class="mtd g"></div></div>
+          <div class="mtbar-title">PixPen AI</div>
+          <div class="mtbar-status"><div class="msd"></div>Pen connected</div>
+        </div>
+        <div class="mtabs">
+          <div class="mt on" onclick="mksw(this,'docs')">📁 Docs</div>
+          <div class="mt" onclick="mksw(this,'editor')">✏️ Edit</div>
+          <div class="mt" onclick="mksw(this,'voice')">🎙️ Voice</div>
+          <div class="mt" onclick="mksw(this,'ai')">🤖 AI</div>
+          <div class="mt" onclick="mksw(this,'sett')">⚙️</div>
+        </div>
+        <div class="mpane on" id="mk-docs">
+          <div class="docs-scroll" id="dlel"></div>
+          <div class="dbtns">
+            <button class="dbtn" onclick="ndoc()">+ New</button>
+            <button class="dbtn" onclick="toast('↗ Exported as PDF')">↗ Export</button>
+            <button class="dbtn" onclick="ddoc()">🗑 Delete</button>
+            <button class="dbtn" onclick="toast('↻ Synced to device')">↻ Sync</button>
+          </div>
+        </div>
+        <div class="mpane" id="mk-editor">
+          <div class="ed-wrap">
+            <div class="ed-tb">
+              <button class="etb" onclick="ec('bold')"><b>B</b></button>
+              <button class="etb" onclick="ec('italic')"><i>I</i></button>
+              <button class="etb" onclick="ec('underline')"><u>U</u></button>
+              <div class="esep"></div>
+              <button class="etb" onclick="ef('h3')">H1</button>
+              <button class="etb" onclick="ec('insertUnorderedList')">≡</button>
+              <div class="esep"></div>
+              <button class="etb" onclick="ecol()">🎨</button>
+              <button class="etb" onclick="sed()">💾 Save</button>
+              <button class="etb" onclick="ced()">📋</button>
+              <button class="etb" onclick="cled()">✕</button>
+            </div>
+            <div class="ed-area" id="edarea" contenteditable="true" spellcheck="false">
+              <h3>Biology — Cell Division</h3>
+              <p>Mitosis involves <span class="ehl">four key stages</span>: prophase, metaphase, anaphase, and telophase.</p>
+              <p>Sister chromatids separate to form <span class="ehl">two identical daughter cells</span>.</p>
+              <p>Key term: <em>cytokinesis</em> — the physical process of cell division.</p>
+            </div>
+            <div class="ed-foot">
+              <div class="ed-live"><div class="eld"></div>Synced</div>
+              <div id="wcnt">Words: 34</div>
+              <div>Bio 101</div>
+            </div>
+          </div>
+        </div>
+        <div class="mpane" id="mk-voice">
+          <div class="vpane">
+            <div class="wfbox" id="wfb">
+              <div class="wr-ind" id="wrind" style="display:none"><div class="wr-dot"></div>REC</div>
+              <div id="wbarsEl"></div>
+            </div>
+            <div class="tbox" id="tboxEl">Tap Record to begin live transcription.</div>
+            <div class="vbtns">
+              <button class="vbtn vbr" id="rbtn" onclick="togRec()">⏺ Record</button>
+              <button class="vbtn vsv" onclick="svVoice()">💾 Save</button>
+            </div>
+          </div>
+        </div>
+        <div class="mpane" id="mk-ai">
+          <div class="aipane">
+            <div class="aimsgs" id="aimsgsEl">
+              <div class="aimsg bot"><div class="ml">PixPen AI</div>Hi — I can summarize notes, generate content, quiz you, translate to 40+ languages, or search the web. What do you need?</div>
+            </div>
+            <div class="airow">
+              <input class="aiinp" id="aiinpEl" placeholder="Ask anything…" onkeydown="if(event.key==='Enter')sendAI()">
+              <button class="aisend" onclick="sendAI()">↑</button>
+            </div>
+          </div>
+        </div>
+        <div class="mpane" id="mk-sett">
+          <div class="settw">
+            <div class="sr"><div><div class="sname">Auto-Transcription</div><div class="sdesc">Transcribe on record start</div></div><label class="tog"><input type="checkbox" checked onchange="toast('Auto-Transcription: '+(this.checked?'On':'Off'))"><div class="tsl"></div></label></div>
+            <div class="sr"><div><div class="sname">Noise Cancellation</div><div class="sdesc">4-mic active filtering</div></div><label class="tog"><input type="checkbox" checked onchange="toast('Noise Cancellation: '+(this.checked?'On':'Off'))"><div class="tsl"></div></label></div>
+            <div class="sr"><div><div class="sname">Cloud Sync</div><div class="sdesc">Real-time document sync</div></div><label class="tog"><input type="checkbox" checked onchange="toast('Cloud Sync: '+(this.checked?'On':'Off'))"><div class="tsl"></div></label></div>
+            <div class="sr"><div><div class="sname">Offline AI Mode</div><div class="sdesc">On-device neural engine</div></div><label class="tog"><input type="checkbox" onchange="toast('Offline AI: '+(this.checked?'On':'Off'))"><div class="tsl"></div></label></div>
+            <div class="sr"><div><div class="sname">Accessibility Mode</div><div class="sdesc">Enhanced visuals</div></div><label class="tog"><input type="checkbox" onchange="toast('Accessibility Mode: '+(this.checked?'On':'Off'))"><div class="tsl"></div></label></div>
+            <div class="sr"><div><div class="sname">Language</div><div class="sdesc">Transcription language</div></div><select class="ssel" onchange="toast('Language: '+this.value)"><option>English (US)</option><option>Spanish</option><option>French</option><option>Mandarin</option><option>Arabic</option><option>Japanese</option></select></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="section">
+  <div class="section-inner section-center">
+    <div class="rv">
+      <div class="eyebrow eyebrow-center">Pricing</div>
+      <h2 class="d">Simple, honest pricing.</h2>
+      <p class="lead" style="max-width:440px;margin:0 auto">All plans include the app. Upgrade or cancel anytime — no contracts, ever.</p>
+    </div>
+    <div class="pgrid">
+      <div class="pc rv">
+        <div class="pc-plan">Starter</div>
+        <div class="pc-price">Free</div>
+        <div class="pc-per">included with device</div>
+        <ul class="pc-list">
+          <li>5 documents per month</li>
+          <li>1 hour of transcription</li>
+          <li>Basic text editor</li>
+          <li>App sync via Bluetooth</li>
+          <li>30-day document history</li>
+        </ul>
+        <button class="pc-btn pcbg" onclick="ppick('Starter')">Get started</button>
+      </div>
+      <div class="pc hot rv" style="transition-delay:.1s">
+        <div class="pc-badge">Most popular</div>
+        <div class="pc-plan">Student Pro</div>
+        <div class="pc-price"><sup>$</sup>9</div>
+        <div class="pc-per">per month</div>
+        <ul class="pc-list">
+          <li>Unlimited documents</li>
+          <li>Unlimited transcription</li>
+          <li>AI content generator</li>
+          <li>Web search integration</li>
+          <li>Export PDF / Word / Docs</li>
+          <li>Offline mode</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="pc-btn pcbw" onclick="ppick('Student Pro')">Start free trial</button>
+      </div>
+      <div class="pc rv" style="transition-delay:.2s">
+        <div class="pc-plan">Professional</div>
+        <div class="pc-price"><sup>$</sup>24</div>
+        <div class="pc-per">per month</div>
+        <ul class="pc-list">
+          <li>Everything in Student Pro</li>
+          <li>Up to 5 devices</li>
+          <li>Advanced AI models</li>
+          <li>Team workspaces</li>
+          <li>API access</li>
+          <li>Dedicated account manager</li>
+        </ul>
+        <button class="pc-btn pcbg" onclick="ppick('Professional')">Contact sales</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section id="use-cases" class="section">
+  <div class="section-inner">
+    <div class="rv">
+      <div class="eyebrow">Who It's For</div>
+      <h2 class="d">Built for everyone<br>who has something to say.</h2>
+    </div>
+    <div class="cgrid">
+      <div class="cc rv"><span class="cc-em">🎓</span><div class="cc-t">Students</div><div class="cc-d">Never miss a word in lecture. PixPen captures everything, formats clean notes, and generates summaries and quiz questions automatically.</div><div class="cc-tags"><span class="ctag">Fast notes</span><span class="ctag">AI summaries</span><span class="ctag">Exam prep</span></div></div>
+      <div class="cc rv" style="transition-delay:.08s"><span class="cc-em">🦻</span><div class="cc-t">Deaf & Hard of Hearing</div><div class="cc-d">Real-time visual transcription, zero delay. Bridges spoken conversation and written text — built with the deaf community from day one.</div><div class="cc-tags"><span class="ctag">Live captions</span><span class="ctag">Visual output</span></div></div>
+      <div class="cc rv"><span class="cc-em">📖</span><div class="cc-t">Reading & Writing Difficulties</div><div class="cc-d">Voice is your pen. Dictate anything, have it read back. AI formats and corrects automatically — no effort required.</div><div class="cc-tags"><span class="ctag">Voice-first</span><span class="ctag">Audio playback</span></div></div>
+      <div class="cc rv" style="transition-delay:.08s"><span class="cc-em">💼</span><div class="cc-t">Professionals</div><div class="cc-d">Capture ideas instantly. Meeting notes, client calls, brainstorm sessions — all stored, searchable, and shareable. Your AI second brain.</div><div class="cc-tags"><span class="ctag">Meeting notes</span><span class="ctag">Collaboration</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SPECS -->
+<section id="specs" class="section">
+  <div class="section-inner section-center">
+    <div class="rv">
+      <div class="eyebrow eyebrow-center">Specifications</div>
+      <h2 class="d">Precision engineered.</h2>
+    </div>
+    <div class="specgrid">
+      <div class="spec-card rv">
+        <div class="spec-row"><span class="sk">Form factor</span><span class="sv hi">Pen-shaped, pocket-portable</span></div>
+        <div class="spec-row"><span class="sk">Dimensions</span><span class="sv">190 × 12 × 12 mm</span></div>
+        <div class="spec-row"><span class="sk">Weight</span><span class="sv">24g</span></div>
+        <div class="spec-row"><span class="sk">Storage</span><span class="sv hi">32 GB + unlimited cloud</span></div>
+        <div class="spec-row"><span class="sk">Battery life</span><span class="sv hi">12 hours active use</span></div>
+        <div class="spec-row"><span class="sk">Charging</span><span class="sv">Magnetic dock · 45 min full</span></div>
+        <div class="spec-row"><span class="sk">Connectivity</span><span class="sv hi">Bluetooth 5.3 + WiFi 6</span></div>
+        <div class="spec-row"><span class="sk">Microphones</span><span class="sv">4-mic array · 360° NC</span></div>
+        <div class="spec-row"><span class="sk">AI processing</span><span class="sv hi">On-device neural engine</span></div>
+        <div class="spec-row"><span class="sk">Transcription accuracy</span><span class="sv hi">98.3%</span></div>
+        <div class="spec-row"><span class="sk">Languages</span><span class="sv">40+</span></div>
+        <div class="spec-row"><span class="sk">Water resistance</span><span class="sv">IPX4 splash-resistant</span></div>
+      </div>
+      <div class="rv" style="transition-delay:.1s">
+        <div class="charge-card">
+          <div class="charge-ey">⚡ Device status</div>
+          <div class="charge-ring-w">
+            <svg width="96" height="96" viewBox="0 0 96 96">
+              <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(12,12,11,.07)" stroke-width="6"/>
+              <circle id="ccirc" cx="48" cy="48" r="40" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+            </svg>
+            <div class="cpct" id="cpct">0%</div>
+          </div>
+          <div style="font-size:.63rem;font-weight:600;color:var(--faint);display:flex;justify-content:space-between;margin-bottom:5px"><span>Battery</span><span>~2h 18m left</span></div>
+          <div class="cbarbg"><div class="cbarfill" id="cbarf"></div></div>
+          <div class="cstat">Charging via Magnetic Dock</div>
+          <div class="ibox">
+            <div style="font-size:.64rem;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">In the box</div>
+            <div class="irow">✏️<span>PixPen AI Device</span></div>
+            <div class="irow">🧲<span>Magnetic Charging Case</span></div>
+            <div class="irow">🔲<span>Unique QR Sticker</span></div>
+            <div class="irow">📄<span>Quick Start Guide</span></div>
+            <div class="irow">🎁<span>3-Month Student Pro</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" class="section" style="padding-bottom:0">
+  <div class="section-inner section-center">
+    <div class="rv">
+      <div class="eyebrow eyebrow-center">Testimonials</div>
+      <h2 class="d">People are <em>loving it.</em></h2>
+    </div>
+  </div>
+  <div class="touter"><div class="ttrack" id="ttrack"></div></div>
+</section>
+
+<!-- FEEDBACK -->
+<section id="feedback" class="section">
+  <div class="section-inner section-center">
+    <div class="rv">
+      <div class="eyebrow eyebrow-center">Feedback</div>
+      <h2 class="d">Your voice shapes<br><em>the product.</em></h2>
+      <p class="lead" style="max-width:460px;margin:0 auto">Every PixPen ships with a unique QR sticker linked to your personal feedback portal. Or leave a note below.</p>
+    </div>
+    <div class="qrcard rv">
+      <div class="qrid">Device ID: PX-G1-<span id="qridEl">7F3A-C920</span></div>
+      <div style="position:relative;display:inline-block">
+        <div class="qrgrid" id="qrgridEl"></div>
+        <div class="qrscan"></div>
+      </div>
+      <p class="qrdesc">Scan the QR on your device, or submit feedback below — every message goes directly to our team.</p>
+      <div style="font-size:.68rem;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.09em;margin-bottom:11px;text-align:left">Rate your experience</div>
+      <div class="stars" id="starsEl">
+        <span class="star" onclick="setStar(1)" onmouseover="hvStar(1)" onmouseout="clStar()">★</span>
+        <span class="star" onclick="setStar(2)" onmouseover="hvStar(2)" onmouseout="clStar()">★</span>
+        <span class="star" onclick="setStar(3)" onmouseover="hvStar(3)" onmouseout="clStar()">★</span>
+        <span class="star" onclick="setStar(4)" onmouseover="hvStar(4)" onmouseout="clStar()">★</span>
+        <span class="star" onclick="setStar(5)" onmouseover="hvStar(5)" onmouseout="clStar()">★</span>
+      </div>
+      <div class="qrform">
+        <textarea class="finput" id="fbtxt" rows="3" placeholder="Tell us about your experience with PixPen AI…"></textarea>
+        <input class="finput" id="fbeml" type="email" placeholder="Email address (optional — for follow-up)">
+        <button class="btn btn-dark btn-lg" style="width:100%;justify-content:center" onclick="subFB()">Submit Feedback</button>
+      </div>
+      <div class="qrok" id="qrokEl">✅ Feedback received — thank you. Our team reads every submission.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-inner rv">
+    <h2>Ready to write<br><em>the future?</em></h2>
+    <p>Pre-order PixPen AI Gen 1 today. Ships Q2 2026 — 3 months of Student Pro, free.</p>
+    <div class="cta-btns">
+      <button class="btn btn-accent btn-xl" onclick="oM()">Pre-Order — $199</button>
+      <button class="btn btn-ghost btn-xl" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.65)" onclick="document.querySelector('#pricing').scrollIntoView({behavior:'smooth'})">View plans →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ftgrid">
+    <div>
+      <div class="ftlogo"><div class="ftlm">✏</div>PixPen AI</div>
+      <div class="fttag">The AI-powered writing pen for students, creators, and everyone who has something important to say.</div>
+      <div class="ftsoc">
+        <div class="soc" onclick="toast('Opening X…')">𝕏</div>
+        <div class="soc" onclick="toast('Opening LinkedIn…')">in</div>
+        <div class="soc" onclick="toast('Opening YouTube…')">▶</div>
+        <div class="soc" onclick="toast('Opening Instagram…')">◉</div>
+      </div>
+    </div>
+    <div class="ftcol"><h5>Product</h5><ul>
+      <li><a href="#features">Features</a></li><li><a href="#specs">Specs</a></li>
+      <li><a href="#pricing">Pricing</a></li><li><a href="#" onclick="toast('Roadmap — Q2 2026')">Roadmap</a></li>
+    </ul></div>
+    <div class="ftcol"><h5>Company</h5><ul>
+      <li><a href="#" onclick="toast('About page coming soon')">About</a></li>
+      <li><a href="#" onclick="toast('Blog launching soon')">Blog</a></li>
+      <li><a href="#" onclick="toast('We\'re hiring!')">Careers</a></li>
+      <li><a href="#" onclick="toast('hello@pixpenai.com')">Contact</a></li>
+    </ul></div>
+    <div class="ftcol"><h5>Support</h5><ul>
+      <li><a href="#" onclick="toast('Help center coming soon')">Help Center</a></li>
+      <li><a href="#use-cases">Accessibility</a></li>
+      <li><a href="#feedback">Leave Feedback</a></li>
+      <li><a href="#" onclick="toast('Privacy policy loading…')">Privacy</a></li>
+    </ul></div>
+  </div>
+  <div class="ftbot">
+    <span>© 2026 PixPen AI Inc. All rights reserved.</span>
+    <span>Designed for humans. Powered by AI.</span>
+  </div>
+</footer>
+
+<script>
+/* cursor */
+const c1=document.getElementById('c1'),c2=document.getElementById('c2');
+let mx=0,my=0,tx=0,ty=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;c1.style.left=mx+'px';c1.style.top=my+'px';});
+setInterval(()=>{tx+=(mx-tx)*.11;ty+=(my-ty)*.11;c2.style.left=tx+'px';c2.style.top=ty+'px';},14);
+
+/* reveal */
+const rvo=new IntersectionObserver(e=>e.forEach((x,i)=>{if(x.isIntersecting){setTimeout(()=>x.target.classList.add('on'),i*52);rvo.unobserve(x.target);}}),{threshold:.07});
+document.querySelectorAll('.rv').forEach(el=>rvo.observe(el));
+
+/* counters */
+const cob=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){const el=x.target,t=+el.dataset.count;let n=0;const iv=setInterval(()=>{n=Math.min(n+Math.ceil(t/36),t);el.textContent=n;if(n>=t)clearInterval(iv);},26);cob.unobserve(el);}}));
+document.querySelectorAll('[data-count]').forEach(el=>cob.observe(el));
+
+/* charge ring */
+const chob=new IntersectionObserver(e=>{if(e[0].isIntersecting){let v=0;const ci=document.getElementById('ccirc'),cb=document.getElementById('cbarf'),cp=document.getElementById('cpct');const iv=setInterval(()=>{v=Math.min(v+1,73);cp.textContent=v+'%';cb.style.width=v+'%';ci.style.strokeDashoffset=251.2*(1-v/100);if(v>=73)clearInterval(iv);},20);chob.disconnect();}});
+chob.observe(document.getElementById('specs'));
+
+/* QR */
+const qg=document.getElementById('qrgridEl');
+for(let i=0;i<81;i++){const s=document.createElement('span');s.style.background=Math.random()>.47?'#FAFAF8':'#0C0C0B';s.style.borderRadius='1px';qg.appendChild(s);}
+document.getElementById('qridEl').textContent=['7F3A-C920','B2D1-E847','A3C9-FF12'][Math.floor(Math.random()*3)];
+
+/* mockup tabs */
+function mksw(el,id){document.querySelectorAll('.mt').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.mpane').forEach(p=>p.classList.remove('on'));el.classList.add('on');document.getElementById('mk-'+id).classList.add('on');}
+
+/* docs */
+let docs=[
+  {n:'Biology Lecture Notes',m:'Today · 847 words',t:'v',i:'🎙️'},
+  {n:'Essay Outline — History',m:'Today · 312 words',t:'t',i:'📝'},
+  {n:'AI Summary: Physics Ch.4',m:'Yesterday · 580 words',t:'a',i:'🤖'},
+  {n:'Chemistry Lab Notes',m:'Yesterday · 1,204 words',t:'v',i:'🎙️'},
+  {n:'Meeting — Project Alpha',m:'3 days ago · 410 words',t:'t',i:'📝'},
+],sel=0;
+const bm={v:['bv','Voice'],t:['bt','Text'],a:['ba','AI']};
+function rdocs(){document.getElementById('dlel').innerHTML=docs.map((d,i)=>`<div class="drow${i===sel?' sel':''}" onclick="sel=${i};rdocs();toast('📄 ${d.n.substring(0,28)}')"><div class="dico">${d.i}</div><div style="flex:1;min-width:0"><div class="dname">${d.n}</div><div class="dmeta">${d.m}</div></div><div class="dbadge ${bm[d.t][0]}">${bm[d.t][1]}</div></div>`).join('');}
+function ndoc(){const n=prompt('Document name:','New Note');if(n){docs.unshift({n,m:'Just now · 0 words',t:'t',i:'📝'});sel=0;rdocs();toast('✅ Created: '+n);}}
+function ddoc(){if(!docs.length)return;if(confirm('Delete "'+docs[sel]?.n+'"?')){const n=docs[sel].n;docs.splice(sel,1);sel=Math.max(0,sel-1);rdocs();toast('Deleted: '+n);}}
+rdocs();
+
+/* editor */
+const earea=document.getElementById('edarea');
+function ec(c){document.execCommand(c);}
+function ef(t){document.execCommand('formatBlock',false,'<'+t+'>');}
+function ecol(){const cs=['#B03008','#1D4ED8','#047857','#B45309'];document.execCommand('foreColor',false,cs[Math.floor(Math.random()*cs.length)]);}
+function sed(){const w=earea.innerText.trim().split(/\s+/).filter(Boolean).length;document.getElementById('wcnt').textContent='Words: '+w;toast('💾 Saved');}
+function ced(){navigator.clipboard?.writeText(earea.innerText).then(()=>toast('📋 Copied')).catch(()=>toast('📋 Select text first'));}
+function cled(){if(confirm('Clear editor?')){earea.innerHTML='<p></p>';document.getElementById('wcnt').textContent='Words: 0';}}
+earea?.addEventListener('input',()=>{const w=earea.innerText.trim().split(/\s+/).filter(Boolean).length;document.getElementById('wcnt').textContent='Words: '+w;});
+
+/* voice */
+let recOn=false,wiv=null,tiv=null,pi=0;
+const PH=['The mitochondria is the powerhouse of the cell and produces ATP through cellular respiration.','Machine learning algorithms improve through experience without being explicitly programmed.','In 1776, the Declaration of Independence was signed, marking a turning point in American history.','The speed of light in a vacuum is approximately 299 million meters per second.','Mitosis involves four main stages: prophase, metaphase, anaphase, and telophase.'];
+const wbEl=document.getElementById('wbarsEl');
+for(let i=0;i<24;i++){const b=document.createElement('div');b.className='wbar';wbEl.appendChild(b);}
+const wbs=wbEl.querySelectorAll('.wbar');
+function togRec(){
+  recOn=!recOn;
+  const btn=document.getElementById('rbtn'),ind=document.getElementById('wrind');
+  if(recOn){btn.textContent='⏹ Stop';btn.classList.add('on');ind.style.display='flex';
+    const ph=PH[pi++%PH.length];let ci=0;
+    document.getElementById('tboxEl').innerHTML='<span class="caret"></span>';
+    wiv=setInterval(()=>wbs.forEach(b=>b.style.height=(3+Math.random()*22)+'px'),88);
+    tiv=setInterval(()=>{ci++;const el=document.getElementById('tboxEl');el.innerHTML=ph.substring(0,ci)+'<span class="caret"></span>';if(ci>=ph.length){clearInterval(tiv);el.textContent=ph;}},52);
+  }else{btn.textContent='⏺ Record';btn.classList.remove('on');ind.style.display='none';clearInterval(wiv);clearInterval(tiv);wbs.forEach(b=>b.style.height='4px');}
+}
+function svVoice(){const t=document.getElementById('tboxEl').innerText;if(t&&!t.startsWith('Tap')){docs.unshift({n:'Voice: '+t.substring(0,38)+'…',m:'Just now · '+t.split(/\s+/).length+' words',t:'v',i:'🎙️'});sel=0;rdocs();toast('✅ Voice note saved to docs');document.getElementById('tboxEl').textContent='Tap Record to begin live transcription.';}else toast('⚠️ Record something first');}
+
+/* AI chat */
+const AR={summarize:'Here\'s a summary:\n\n• Main topic: Cell division\n• Key stages: prophase → metaphase → anaphase → telophase\n• Key term: cytokinesis\n\nWant a quiz from this?',quiz:'Quiz time! 🧠\n\nQ1: What are the 4 stages of mitosis?\nQ2: What is cytokinesis?\nQ3: What does the mitochondria produce?',translate:'I support 40+ languages. Which would you like?',hello:'Hi there! I can summarize, quiz, search, write, or translate. What do you need?',hi:'Hey! Try: summarize, quiz, translate, search, or write.',help:'I can:\n→ Summarize your documents\n→ Generate outlines or essays\n→ Quiz you on notes\n→ Translate (40+ languages)\n→ Search the web\n→ Rewrite or improve text',search:'Searching… 🔍\n\nFound 12 results. Top source: Wikipedia. Want me to pull a summary?',write:'Give me a topic, tone, and length and I\'ll write it for you.',default:'Got it — here\'s what I found based on your notes and context.\n\nWant me to expand, reformat, or try a different approach?'};
+function gai(m){const l=m.toLowerCase();for(const k of Object.keys(AR))if(l.includes(k))return AR[k];return AR.default;}
+function sendAI(){const inp=document.getElementById('aiinpEl'),msgs=document.getElementById('aimsgsEl'),t=inp.value.trim();if(!t)return;msgs.innerHTML+=`<div class="aimsg user">${t}</div>`;inp.value='';msgs.scrollTop=9999;const d=document.createElement('div');d.className='typing';d.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(d);msgs.scrollTop=9999;setTimeout(()=>{d.remove();msgs.innerHTML+=`<div class="aimsg bot"><div class="ml">PixPen AI</div>${gai(t).replace(/\n/g,'<br>')}</div>`;msgs.scrollTop=9999;},850+Math.random()*500);}
+
+/* pricing */
+function ppick(p){const m={Starter:'✅ Starter plan selected.',Professional:'💼 Our team will reach out shortly.'};toast(m[p]||'🎓 Starting your 14-day free trial!');oM();}
+
+/* stars */
+let sv=0;
+function setStar(n){sv=n;document.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('on',i<n));}
+function hvStar(n){document.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('hv',i<n));}
+function clStar(){document.querySelectorAll('.star').forEach(s=>s.classList.remove('hv'));}
+function subFB(){if(!sv){toast('⚠️ Please select a rating first');return;}if(!document.getElementById('fbtxt').value.trim()){toast('⚠️ Please write some feedback');return;}document.getElementById('fbtxt').value='';document.getElementById('fbeml').value='';setStar(0);const ok=document.getElementById('qrokEl');ok.style.display='block';toast('✅ Feedback submitted — thank you!');setTimeout(()=>ok.style.display='none',6000);}
+
+/* modal */
+function oM(){document.getElementById('ov').classList.add('open');}
+function cM(){document.getElementById('ov').classList.remove('open');}
+document.getElementById('ov').addEventListener('click',e=>{if(e.target===document.getElementById('ov'))cM();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cM();});
+function doOrder(){const n=document.getElementById('mn').value.trim(),em=document.getElementById('me').value.trim(),c=document.getElementById('mc').value,p=document.getElementById('mp').value;if(!n||!em){toast('⚠️ Please fill in your name and email');return;}if(!em.includes('@')){toast('⚠️ Please enter a valid email address');return;}if(!c){toast('⚠️ Please select a color variant');return;}if(!p){toast('⚠️ Please select a plan');return;}document.getElementById('mf').style.display='none';document.getElementById('mok').style.display='block';toast('🎉 Pre-order confirmed for '+n+'!');}
+
+/* testimonials */
+const TD=[{q:'"PixPen AI changed how I take notes. I just speak and everything is perfectly formatted."',n:'Marcus T.',r:'University Student'},{q:'"Real-time transcription means I can follow conversations I never could before. Life-changing."',n:'Priya R.',r:'Accessibility Advocate'},{q:'"First tool that works the way my brain does — voice first, always organized."',n:'Daniel K.',r:'Product Manager'},{q:'"My daughter uses it for school when her hands get tired. Accurate every time."',n:'Sarah M.',r:'Parent'},{q:'"Full meeting summary in my inbox before I\'m back at my desk. Remarkable."',n:'James L.',r:'Consultant'},{q:'"The white-out writer is real magic. Paper output from AI voice commands."',n:'Alex W.',r:'Journalist'},{q:'"Finally bridges the gap between the classroom and my learning style."',n:'Yuki N.',r:'High School Student'},{q:'"As someone with dyslexia, this is the first device that genuinely works for me."',n:'Chris P.',r:'Graphic Designer'}];
+const ttEl=document.getElementById('ttrack');
+[...TD,...TD].forEach(d=>{ttEl.innerHTML+=`<div class="tcard"><div class="tstars">★★★★★</div><div class="tquote">${d.q}</div><div class="tauthor"><div class="tav">${d.n[0]}</div><div><div class="tname">${d.n}</div><div class="trole">${d.r}</div></div></div></div>`;});
+
+/* toast */
+let tTm;
+function toast(m){const t=document.getElementById('tst');t.textContent=m;t.classList.add('on');clearTimeout(tTm);tTm=setTimeout(()=>t.classList.remove('on'),3200);}
+
+/* smooth nav */
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth'});}}));
+</script>
+</body>
+</html>
